@@ -2,25 +2,25 @@
 
 A clojure(script) testing framework designed to be used from the REPL
 
-[![Clojars Project](https://img.shields.io/clojars/v/datest.svg)](https://clojars.org/datest)
+[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.stiwar/datest.svg)](https://clojars.org/org.clojars.stiwar/datest)
 
 ### Leiningen/Boot
 
-    [datest "1.0.0"]
+    [org.clojars.stiwar/datest "1.0.0"]
 
 ### Clojure CLI/deps.edn
 
-    datest/datest {:mvn/version "1.0.0"}
+    org.clojars.stiwar/datest {:mvn/version "1.0.0"}
 
 ### Gradle
 
-    compile 'datest:datest:1.0.0'
+    implementation("org.clojars.stiwar:datest:1.0.0")
 
 ### Maven
 
 ```xml
 <dependency>
-  <groupId>datest</groupId>
+  <groupId>org.clojars.stiwar</groupId>
   <artifactId>datest</artifactId>
   <version>1.0.0</version>
 </dependency>
