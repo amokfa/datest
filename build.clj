@@ -1,7 +1,8 @@
 (ns build
-  (:require [clojure.tools.build.api :as b]))
+  (:require [clojure.tools.build.api :as b]
+            [deps-deploy.deps-deploy :as dd]))
 
-(def lib 'com.github.YOUR-GITHUB-NAME/clojure-test-lib)
+(def lib 'org.clojars.stiwar/datest)
 (def version "1.0.0")
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
@@ -17,11 +18,22 @@
                 :version   version
                 :basis     basis
                 :src-dirs  ["src"]
-                :scm {:url "https://github.com/amokfa/datest"
-                      :tag "v1.0.0"
-                      :connection "scm:git:git://github.com/amokfa/datest.git"
-                      :developerConnection "scm:git:ssh://git@github.com/amokfa/datest.git"}})
+                :scm       {:url                 "https://github.com/amokfa/datest"
+                            :tag                 "v1.0.0"
+                            :connection          "scm:git:git://github.com/amokfa/datest.git"
+                            :developerConnection "scm:git:ssh://git@github.com/amokfa/datest.git"}
+                :pom-data  [[:licenses
+                             [:license
+                              [:name "MIT License"]
+                              [:url "http://www.opensource.org/licenses/mit-license.php"]
+                              [:distribution "repo"]]]]})
   (b/copy-dir {:src-dirs   ["src" "resources"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file  jar-file}))
+
+(defn deploy [_]
+  (jar _)
+  (dd/deploy {:installer :remote
+              :artifact  jar-file
+              :pom-file  (b/pom-path {:lib lib :class-dir class-dir})}))
