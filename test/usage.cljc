@@ -127,7 +127,7 @@
                                          (reset! b 1)
                                          (reset! c (/ (clojure.core/deref b) (clojure.core/deref a)))
                                          {:result :OK}),
-                            :state     {a 0, b 1, c :tst/UNINITIALIZED}}}}
+                            :state     {a 0, b 1, c :datest/UNINITIALIZED}}}}
 
 (enable-console-print!)
 ; summary
