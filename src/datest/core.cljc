@@ -62,27 +62,28 @@
      :cljs ex))
 
 (defn run-test [ts]
-  (->> ts
-       (map (fn [[name body]]
-              [name (let [md (meta body)]
-                      (if md
-                        (let [{params :params code :code module-name :module-name} md
-                              param_bindings (->> params
-                                                  (map (fn [p] [p (atom :datest/UNINITIALIZED)]))
-                                                  (into {}))]
-                          (assoc
-                            (try
-                              (body param_bindings)
-                              (catch #?(:clj  Throwable
-                                        :cljs :default) e
-                                {:result    :EXCEPTION
-                                 :exception (update-exception e module-name)}))
-                            ;:context code
-                            :state (->> param_bindings
-                                        (map (fn [[k v]] [k @v]))
-                                        (into {}))))
-                        (run-test body)))]))
-       (into (sorted-map))))
+  (let [md (meta ts)]
+    (if md
+      (let [body ts
+            {params :params code :code module-name :module-name} md
+            param_bindings (->> params
+                                (map (fn [p] [p (atom :datest/UNINITIALIZED)]))
+                                (into {}))]
+        (assoc
+          (try
+            (body param_bindings)
+            (catch #?(:clj  Throwable
+                      :cljs :default) e
+              {:result    :EXCEPTION
+               :exception (update-exception e module-name)}))
+          ;:context code
+          :state (->> param_bindings
+                      (map (fn [[k v]] [k @v]))
+                      (into {}))))
+      (->> ts
+           (map (fn [[name body]]
+                  [name (run-test body)]))
+           (into (sorted-map))))))
 
 (defn flatten-result [res]
   (apply concat (for [[name body] res]
