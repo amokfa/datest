@@ -11,12 +11,45 @@
                 :cljs cljs.core/PersistentVector))
 
 (defn get-exception-filter []
-  #?(:clj (-> *ns*
-              ns-name
-              name
-              (clojure.string/split #"\.")
-              first)
+  #?(:clj  (-> *ns*
+               ns-name
+               name
+               (clojure.string/split #"\.")
+               first)
      :cljs nil))
+
+(defmacro dbg [form]
+  (let [result-s (symbol "result")
+        repr (str form)]
+    `(let [~result-s ~form]
+       (println (str ~repr " : " ~result-s))
+       ~result-s)))
+
+(defmacro testing-inner-node [name & subs]
+  (doseq [sub subs]
+    (assert (and (seqable? sub)
+                 (= 'testing2 (first sub)))))
+  `(assoc (sorted-map)
+     ~name
+     (apply merge ~(vec subs))))
+
+(defmacro testing-leaf-node [name & rst]
+  (let [[params & body] rst
+        args (->> params
+                  (map (fn [p] `[~p '~p]))
+                  (into {}))
+        test-fn `(fn [~args]
+                   ~@body)]
+    (assoc (sorted-map)
+      name `(with-meta ~test-fn
+                       {:code        (quote ~test-fn)
+                        :params      '~params
+                        :module-name (get-exception-filter)}))))
+
+(defmacro testing2 [name & rst]
+  (if (instance? VecType (first rst))
+    `(testing-leaf-node ~name ~@rst)
+    `(testing-inner-node ~name ~@rst)))
 
 ; name !== :main
 ; params == [symbol]
