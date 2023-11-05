@@ -86,18 +86,18 @@
 
 (defn flatten-result [res]
   (apply concat (for [[name body] res]
-                  (if (= :main name)
-                    [(assoc body :path '(:main))]
+                  (if (contains? body :state)
+                    [(assoc body :path (seq [name]))]
                     (map #(update % :path conj name) (flatten-result body))))))
 
 (defn treefy-result [res]
   (let [chs (group-by #(first (:path %)) res)]
     (reduce
-      (fn [r [name body]]
-        (assoc r name (if (= name :main)
-                        (dissoc (first body) :path)
-                        (treefy-result (map #(update % :path rest) body)))))
-      {}
+      (fn [r [name children]]
+        (if (nil? name)
+          (dissoc (first children) :path)
+          (assoc r name (treefy-result (map #(update % :path rest) children)))))
+      (sorted-map)
       chs)))
 
 (defn get-failed [res]
