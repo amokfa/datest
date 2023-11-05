@@ -41,6 +41,7 @@
                         :module-name (get-exception-filter)}))))
 
 (defmacro testing [name & rst]
+  (assert (not= name :state))
   (if (instance? VecType (first rst))
     `(testing-leaf-node ~name ~@rst)
     `(testing-inner-node ~name ~@rst)))
