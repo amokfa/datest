@@ -30,8 +30,13 @@
     {name (into (sorted-map)
                 (if fns
                   (conj res [:main `(with-meta ~fn
-                                               {:code   (quote ~fn)
-                                                :params '~params})])
+                                               {:code        (quote ~fn)
+                                                :params      '~params
+                                                :module-name (-> *ns*
+                                                                 ns-name
+                                                                 name
+                                                                 (clojure.string/split #"\.")
+                                                                 first)})])
                   res))}))
 
 (defn return-comparison [expected actual]
@@ -42,10 +47,10 @@
      :actual   actual
      :diff     (diff expected actual)}))
 
-(defn update-exception [ex filter]
+(defn update-exception [ex module-name]
   #?(:clj
      (let [old-stack (.getStackTrace ex)
-           new-stack (into-array StackTraceElement (filter #(clojure.string/includes? (.getClassName %) filter) (seq old-stack)))]
+           new-stack (into-array StackTraceElement (filter #(clojure.string/includes? (.getClassName %) module-name) (seq old-stack)))]
        (doto (Throwable. (.getMessage ex) (.getCause ex))
          (.setStackTrace new-stack)))
      :cljs ex))
@@ -55,7 +60,7 @@
         (for [[name body] ts]
           [name
            (if (= name :main)
-             (let [{params :params code :code filter :filter} (meta body)
+             (let [{params :params code :code module-name :module-name} (meta body)
                    param_bindings (->> params
                                        (map (fn [p] [p (atom :datest/UNINITIALIZED)]))
                                        (into {}))]
@@ -65,7 +70,7 @@
                    (catch #?(:clj  Throwable
                              :cljs :default) e
                      {:result    :EXCEPTION
-                      :exception (update-exception e filter)}))
+                      :exception (update-exception e module-name)}))
                  ;:context code
                  :state (->> param_bindings
                              (map (fn [[k v]] [k @v]))
