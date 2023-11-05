@@ -3,7 +3,7 @@
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'org.clojars.stiwar/datest)
-(def version "1.0.1")
+(def version "1.1.0")
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
 (def jar-file (format "target/%s-%s.jar" (name lib) version))
@@ -19,7 +19,7 @@
                 :basis     basis
                 :src-dirs  ["src"]
                 :scm       {:url                 "https://github.com/amokfa/datest"
-                            :tag                 "v1.0.1"
+                            :tag                 "v1.1.0"
                             :connection          "scm:git:git://github.com/amokfa/datest.git"
                             :developerConnection "scm:git:ssh://git@github.com/amokfa/datest.git"}
                 :pom-data  [[:licenses
