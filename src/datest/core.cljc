@@ -4,20 +4,19 @@
 (def VecType #?(:clj  clojure.lang.PersistentVector
                 :cljs cljs.core/PersistentVector))
 
-(defn get-exception-filter []
-  #?(:clj  (-> *ns*
-               ns-name
-               name
-               (clojure.string/split #"\.")
-               first)
-     :cljs nil))
+(def ^:dynamic EXCEPTION_FILTER nil)
 
-(defmacro dbg [form]
-  (let [result-s (symbol "result")
-        repr (str form)]
-    `(let [~result-s ~form]
-       (println (str ~repr " : " ~result-s))
-       ~result-s)))
+(defn get-exception-filter []
+  (if EXCEPTION_FILTER
+    EXCEPTION_FILTER
+    #?(:clj  (-> *ns*
+                 ns-name
+                 name
+                 (clojure.string/split #"\.")
+                 first
+                 (clojure.string/replace #"-" "_")
+                 clojure.core/re-pattern)
+       :cljs nil)))
 
 (defmacro testing-inner-node [name & subs]
   (doseq [sub subs]
@@ -36,9 +35,9 @@
                    ~@body)]
     (assoc (sorted-map)
       name `(with-meta ~test-fn
-                       {:code        (quote ~test-fn)
-                        :params      '~params
-                        :module-name (get-exception-filter)}))))
+                       {:code             (quote ~test-fn)
+                        :params           '~params
+                        :exception-filter (get-exception-filter)}))))
 
 (defmacro testing [name & rst]
   (assert (not= name :state))
@@ -54,10 +53,11 @@
      :actual   actual
      :diff     (diff expected actual)}))
 
-(defn update-exception [ex module-name]
+(defn update-exception [ex exception-filter]
   #?(:clj
      (let [old-stack (.getStackTrace ex)
-           new-stack (into-array StackTraceElement (filter #(clojure.string/includes? (.getClassName %) module-name) (seq old-stack)))]
+           new-stack (into-array StackTraceElement (filter #(clojure.core/re-find exception-filter (.getClassName %))
+                                                           (seq old-stack)))]
        (doto ex
          (.setStackTrace new-stack)))
      :cljs ex))
@@ -66,7 +66,7 @@
   (let [md (meta ts)]
     (if md
       (let [body ts
-            {params :params code :code module-name :module-name} md
+            {params :params code :code exception-filter :exception-filter} md
             param_bindings (->> params
                                 (map (fn [p] [p (atom :datest/UNINITIALIZED)]))
                                 (into {}))]
@@ -76,7 +76,7 @@
             (catch #?(:clj  Throwable
                       :cljs :default) e
               {:result    :EXCEPTION
-               :exception (update-exception e module-name)}))
+               :exception (update-exception e exception-filter)}))
           ;:context code
           :state (->> param_bindings
                       (map (fn [[k v]] [k @v]))
