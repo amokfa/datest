@@ -1,20 +1,17 @@
 (ns usage
-  (:require [datest.core :refer [run-test get-failed summarize-result combine-tests flatten-result testing] :refer-macros [testing]]
-            [cljs.pprint :refer [pprint]]))
+  (:require [datest.core :refer [run-test get-failed summarize-result combine-tests flatten-result testing] :refer-macros [testing]]))
 
 ; 'testing' returns a test spec that can be passed to 'run-test'
 (def t (testing :a
-                (testing :b
+                (testing :b []
                          {:result :OK})
-                (testing :c
+                (testing :c []
                          {:result  :ERR
                           :message "failing test"})
-                (testing :d
+                (testing :d []
                          (throw (new Error))
                          {:result  :OK
-                          :message "ignored"})
-                {:result  :ERR
-                 :message "another failing test"}))
+                          :message "ignored"})))
 
 (def res (run-test t))
 ; returns:
@@ -64,21 +61,21 @@
 
 (defn int-tests []
   (testing :ints
-           (testing :adding_1
+           (testing :adding_1 []
                     (if (= (+ 5 1) 6)
                       {:result :OK}
                       {:result :ERR}))
-           (testing :adding_2
+           (testing :adding_2 []
                     (if (= (+ 5 2) 6)
                       {:result :OK}
                       {:result  :ERR
                        :message "values not equal"}))
-           (testing :failing_test
+           (testing :failing_test []
                     (throw (new Error)))))
 
 (defn string-tests []
   (testing :strings
-           (testing :concating_asdf
+           (testing :concating_asdf []
                     (if (= (str "hello" "asdf") "helloasdf")
                       {:result :OK}
                       {:result :ERR}))))
