@@ -10,6 +10,14 @@
 (def VecType #?(:clj  clojure.lang.PersistentVector
                 :cljs cljs.core/PersistentVector))
 
+(defn get-exception-filter []
+  #?(:clj (-> *ns*
+              ns-name
+              name
+              (clojure.string/split #"\.")
+              first)
+     :cljs nil))
+
 ; name !== :main
 ; params == [symbol]
 (defmacro testing [name & rst]
@@ -32,11 +40,7 @@
                   (conj res [:main `(with-meta ~fn
                                                {:code        (quote ~fn)
                                                 :params      '~params
-                                                :module-name (-> *ns*
-                                                                 ns-name
-                                                                 name
-                                                                 (clojure.string/split #"\.")
-                                                                 first)})])
+                                                :module-name (get-exception-filter)})])
                   res))}))
 
 (defn return-comparison [expected actual]
@@ -51,7 +55,7 @@
   #?(:clj
      (let [old-stack (.getStackTrace ex)
            new-stack (into-array StackTraceElement (filter #(clojure.string/includes? (.getClassName %) module-name) (seq old-stack)))]
-       (doto (Throwable. (.getMessage ex) (.getCause ex))
+       (doto ex
          (.setStackTrace new-stack)))
      :cljs ex))
 
